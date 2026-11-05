@@ -988,7 +988,7 @@ jobs:
           cd kernel_workspace
           if [ "${{ github.event.inputs.SUSFS }}" != "false" ]; then
             SUSFS_META="${{ env.SUSFS_META }}"
-            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
+            git clone https://github.com/ShirkNeko/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
             cd susfs4ksu
             if [ -n "$SUSFS_META" ]; then
               if [[ "$SUSFS_META" =~ ^[0-9]+$ ]]; then
@@ -1470,6 +1470,9 @@ jobs:
             if [ -n "$image_path" ]; then
               echo "✅ 使用官方脚本编译，成功找到 Image 文件"
             fi
+          fi
+          if [ -z "$image_path" ]; then
+            image_path=$(find ./kernel_workspace -name "Image" -path "*arch/arm64/boot*" 2>/dev/null | head -n 1)
           fi
           if [ -z "$image_path" ]; then
             echo "❌ 未找到 Image 文件，构建失败" >&2
