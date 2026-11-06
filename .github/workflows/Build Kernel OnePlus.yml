@@ -811,7 +811,7 @@ jobs:
         if: ${{ always() }}
         run: |
           cd kernel_workspace/kernel_platform
-          SUFFIX="$(printf '%s' 'UnVJ6Ium5a+76IqN6JC9MzI0LU9uZXBsdXNBY2Uz' | base64 -d)"
+          SUFFIX="$(printf '%s' 'UnVJMzI0LUt1WHVhblNoYW9MdW8tT25lcGx1c0FjZTM=' | base64 -d)"
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
