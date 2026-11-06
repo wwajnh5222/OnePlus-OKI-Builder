@@ -1158,7 +1158,7 @@ jobs:
           set_config "CONFIG_KSU=y"
 
           # KPM配置
-          if [ "${{ github.event.inputs.KPM }}" = "KPM" ] || [ "${{ github.event.inputs.KPM }}" = "N/A" ]; then
+          if [ "${{ github.event.inputs.KPM }}" = "KPM" ]; then
             set_config "CONFIG_KPM=y"
           fi
           if [ "${{ github.event.inputs.KPM }}" = "KPN" ]; then
@@ -1179,6 +1179,10 @@ jobs:
             set_config "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"
           set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
           # BBR congestion control
+          set_config "CONFIG_TCP_CONG_ADVANCED=y"
+          set_config "CONFIG_TCP_CONG_BBR=y"
+          set_config "CONFIG_NET_SCH_FQ=y"
+          set_config "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
           set_config "CONFIG_TCP_CONG_BBR=y"
           set_config "CONFIG_NET_SCH_FQ=y"
 
