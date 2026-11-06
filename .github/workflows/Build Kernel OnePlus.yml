@@ -814,10 +814,11 @@ jobs:
           fi
 
       - name: Custom Kernel Suffix if set
-        if: ${{ env.SUFFIX != '' }}
+        if: ${{ always() }}
         run: |
           cd kernel_workspace/kernel_platform
           SUFFIX="$(cat "$GITHUB_WORKSPACE/.github/ace3-suffix.txt")"
+          if [ -z "$SUFFIX" ]; then echo "no suffix file"; exit 0; fi
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
@@ -853,7 +854,7 @@ jobs:
 
       # 伪官方格式的随机后缀（仅在 SUFFIX 未设置时生效）*
       - name: Custom Kernel Random Suffix if empty
-        if: ${{ env.SUFFIX == '' }}
+        if: ${{ false }}
         run: |
           cd kernel_workspace/kernel_platform
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
