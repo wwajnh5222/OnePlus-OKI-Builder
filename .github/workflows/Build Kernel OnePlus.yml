@@ -725,12 +725,6 @@ jobs:
             sed -i 's/if check_defconfig == None:/if False:  # check_defconfig == None:/' kernel_platform/build/kernel/kleaf/common_kernels.bzl
           fi
 
-      - name: Apply Droidspaces sysvipc kABI patch
-        run: |
-          cd kernel_workspace/kernel_platform/common
-          printf '%s' 'RnJvbSA3NjlhNWNmZGMxN2I5OGQ4ZTBiZDQ5MWQ0NWY1NjUxMTgwZTQyMTk2IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQpGcm9tOiBudWxscHRyLXQtb3NzIDwxMjc4MjIyMjYrbnVsbHB0ci10LW9zc0B1c2Vycy5ub3JlcGx5LmdpdGh1Yi5jb20+CkRhdGU6IFdlZCwgOCBBcHIgMjAyNiAwOToxODoyMyArMDAwMApTdWJqZWN0OiBbUEFUQ0hdIEFCSTogdXNlIEFCSSBwYWRkaW5nIGZvciBTWVNWSVBDCgpUaGlzIGNvbW1pdCBhbGxvd3MgdXMgdG8gZW5hYmxlIENPTkZJR19TWVNWSVBDIGluIGRlZmNvbmZpZyB3aXRob3V0IGJyZWFraW5nIGtlcm5lbCBBQkkuCgpTaWduZWQtb2ZmLWJ5OiBudWxscHRyLXQtb3NzIDwxMjc4MjIyMjYrbnVsbHB0ci10LW9zc0B1c2Vycy5ub3JlcGx5LmdpdGh1Yi5jb20+Ci0tLQogaW5jbHVkZS9saW51eC9zY2hlZC5oIHwgMTAgKysrKysrKystLQogMSBmaWxlIGNoYW5nZWQsIDggaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9pbmNsdWRlL2xpbnV4L3NjaGVkLmggYi9pbmNsdWRlL2xpbnV4L3NjaGVkLmgKaW5kZXggYjI3NWNkMjg1MTgyLi5mMDNlMGQ1ZTQ5YzEgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvbGludXgvc2NoZWQuaAorKysgYi9pbmNsdWRlL2xpbnV4L3NjaGVkLmgKQEAgLTEwNzQsOCArMTA3NCw4IEBAIHN0cnVjdCB0YXNrX3N0cnVjdCB7CiAJc3RydWN0IG5hbWVpZGF0YQkJKm5hbWVpZGF0YTsKIAogI2lmZGVmIENPTkZJR19TWVNWSVBDCi0Jc3RydWN0IHN5c3Zfc2VtCQkJc3lzdnNlbTsKLQlzdHJ1Y3Qgc3lzdl9zaG0JCQlzeXN2c2htOworCS8vIHN0cnVjdCBzeXN2X3NlbQkJCXN5c3ZzZW07CisJLy8gc3RydWN0IHN5c3Zfc2htCQkJc3lzdnNobTsKICNlbmRpZgogI2lmZGVmIENPTkZJR19ERVRFQ1RfSFVOR19UQVNLCiAJdW5zaWduZWQgbG9uZwkJCWxhc3Rfc3dpdGNoX2NvdW50OwpAQCAtMTUxMyw5ICsxNTEzLDE1IEBAIHN0cnVjdCB0YXNrX3N0cnVjdCB7CiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoMyk7CiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoNCk7CiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoNSk7CisKKyNpZmRlZiBDT05GSUdfU1lTVklQQworCUFORFJPSURfS0FCSV9VU0UoNiwgc3RydWN0IHN5c3Zfc2VtIHN5c3ZzZW0pOworCV9BTkRST0lEX0tBQklfUkVQTEFDRShBTkRST0lEX0tBQklfUkVTRVJWRSg3KTsgQU5EUk9JRF9LQUJJX1JFU0VSVkUoOCksIHN0cnVjdCBzeXN2X3NobSBzeXN2c2htKTsKKyNlbHNlCiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoNik7CiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoNyk7CiAJQU5EUk9JRF9LQUJJX1JFU0VSVkUoOCk7CisjZW5kaWYKIAogCS8qCiAJICogTmV3IGZpZWxkcyBmb3IgdGFza19zdHJ1Y3Qgc2hvdWxkIGJlIGFkZGVkIGFib3ZlIGhlcmUsIHNvIHRoYXQK' | base64 -d > /tmp/ds_sysvipc.patch
-          patch -p1 < /tmp/ds_sysvipc.patch
-
       - name: Kernel Version Handling
         env:
           DEVICE_KERNEL: ${{ github.event.inputs.DEVICE_KERNEL }}
@@ -813,12 +807,6 @@ jobs:
           fi
 
       # 自定义内核后缀
-      - name: Load custom kernel suffix
-        run: |
-          if [ -f "$GITHUB_WORKSPACE/.github/ace3-suffix.txt" ]; then
-            printf 'SUFFIX=%s\n' "$(cat "$GITHUB_WORKSPACE/.github/ace3-suffix.txt")" >> "$GITHUB_ENV"
-          fi
-
       - name: Custom Kernel Suffix if set
         if: ${{ always() }}
         run: |
@@ -1190,28 +1178,10 @@ jobs:
             set_config "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"
             set_config "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"
           set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
+          # BBR congestion control
+          set_config "CONFIG_TCP_CONG_BBR=y"
+          set_config "CONFIG_NET_SCH_FQ=y"
 
-          # Droidspaces container support
-          set_config "CONFIG_SYSVIPC=y"
-          set_config "CONFIG_IPC_NS=y"
-          set_config "CONFIG_PID_NS=y"
-          set_config "CONFIG_USER_NS=y"
-          set_config "CONFIG_DEVPTS_MULTIPLE_INSTANCES=y"
-          set_config "CONFIG_POSIX_MQUEUE=y"
-          set_config "CONFIG_DEVTMPFS=y"
-          set_config "CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y"
-          set_config "CONFIG_IP6_NF_NAT=y"
-          set_config "CONFIG_IP6_NF_TARGET_MASQUERADE=y"
-          set_config "CONFIG_MACVLAN=y"
-          set_config "CONFIG_NETFILTER_XT_TARGET_REJECT=y"
-          set_config "CONFIG_NETFILTER_XT_TARGET_LOG=y"
-          set_config "CONFIG_NETFILTER_XT_MATCH_RECENT=y"
-          set_config "CONFIG_IP_SET=y"
-          set_config "CONFIG_IP_SET_HASH_IP=y"
-          set_config "CONFIG_IP_SET_HASH_NET=y"
-          set_config "CONFIG_NETFILTER_XT_SET=y"
-          set_config "CONFIG_TMPFS_POSIX_ACL=y"
-          set_config "CONFIG_TMPFS_XATTR=y"
           else
             set_config "CONFIG_KSU_SUSFS=n"
           fi
