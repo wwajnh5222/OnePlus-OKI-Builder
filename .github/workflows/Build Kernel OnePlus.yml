@@ -1184,6 +1184,13 @@ jobs:
             set_config "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"
             set_config "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"
           set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
+
+          # Droidspaces container support
+          set_config "CONFIG_IPC_NS=y"
+          set_config "CONFIG_PID_NS=y"
+          set_config "CONFIG_USER_NS=y"
+          set_config "CONFIG_CGROUP_PIDS=y"
+          set_config "CONFIG_DEVPTS_MULTIPLE_INSTANCES=y"
           else
             set_config "CONFIG_KSU_SUSFS=n"
           fi
