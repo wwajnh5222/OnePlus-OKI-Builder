@@ -1187,6 +1187,7 @@ jobs:
           set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
 
           # Droidspaces container support
+          set_config "CONFIG_SYSVIPC=y"
           set_config "CONFIG_IPC_NS=y"
           set_config "CONFIG_PID_NS=y"
           set_config "CONFIG_USER_NS=y"
