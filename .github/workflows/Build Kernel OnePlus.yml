@@ -807,11 +807,17 @@ jobs:
           fi
 
       # 自定义内核后缀
+      - name: Load custom kernel suffix
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/.github/ace3-suffix.txt" ]; then
+            printf 'SUFFIX=%s\n' "$(cat "$GITHUB_WORKSPACE/.github/ace3-suffix.txt")" >> "$GITHUB_ENV"
+          fi
+
       - name: Custom Kernel Suffix if set
         if: ${{ env.SUFFIX != '' }}
         run: |
           cd kernel_workspace/kernel_platform
-          SUFFIX="${{ env.SUFFIX }}"
+          SUFFIX="$(cat "$GITHUB_WORKSPACE/.github/ace3-suffix.txt")"
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
