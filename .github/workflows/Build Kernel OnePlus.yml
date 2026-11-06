@@ -976,6 +976,13 @@ jobs:
           grep -nE '^(REPO_OWNER|REPO_NAME|REPO_BRANCH|KSU_VERSION_API|KSU_VERSION_FULL|VERSION_TAG|GIT_BIN|CURL_BIN)' kernel/Makefile
           echo "::endgroup::"
 
+      - name: Add SUSFS priority uid filter Kconfig
+        run: |
+          cd kernel_workspace/kernel_platform/common
+          if [ -f drivers/kernelsu/Kconfig ] && ! grep -q KSU_SUSFS_PRIORITY_UID_FILTER drivers/kernelsu/Kconfig; then
+            printf '\nconfig KSU_SUSFS_PRIORITY_UID_FILTER\n\tbool "SUSFS priority uid filter"\n\tdefault y\n' >> drivers/kernelsu/Kconfig
+          fi
+
       - name: Apply Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
         run: |
