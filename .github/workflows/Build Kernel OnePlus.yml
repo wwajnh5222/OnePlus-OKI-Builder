@@ -808,10 +808,10 @@ jobs:
 
       # 自定义内核后缀
       - name: Custom Kernel Suffix if set
-        if: ${{ always() }}
+        if: ${{ env.SUFFIX != '' }}
         run: |
           cd kernel_workspace/kernel_platform
-          SUFFIX="$(printf '%s' 'UnVJMzI0LUt1WHVhblNoYW9MdW8tT25lcGx1c0FjZTM=' | base64 -d)"
+          SUFFIX="${{ env.SUFFIX }}"
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
 
           for f in ./common/scripts/setlocalversion ./"$KERNEL_REPOS"/scripts/setlocalversion ./external/dtc/scripts/setlocalversion; do
@@ -847,7 +847,7 @@ jobs:
 
       # 伪官方格式的随机后缀（仅在 SUFFIX 未设置时生效）*
       - name: Custom Kernel Random Suffix if empty
-        if: ${{ false }}
+        if: ${{ env.SUFFIX == '' }}
         run: |
           cd kernel_workspace/kernel_platform
           FAST_BUILD="${{ github.event.inputs.FAST_BUILD }}"
@@ -976,13 +976,6 @@ jobs:
           grep -nE '^(REPO_OWNER|REPO_NAME|REPO_BRANCH|KSU_VERSION_API|KSU_VERSION_FULL|VERSION_TAG|GIT_BIN|CURL_BIN)' kernel/Makefile
           echo "::endgroup::"
 
-      - name: Add SUSFS priority uid filter Kconfig
-        run: |
-          cd kernel_workspace/kernel_platform/common
-          if [ -f drivers/kernelsu/Kconfig ] && ! grep -q KSU_SUSFS_PRIORITY_UID_FILTER drivers/kernelsu/Kconfig; then
-            printf '\nconfig KSU_SUSFS_PRIORITY_UID_FILTER\n\tbool "SUSFS priority uid filter"\n\tdefault y\n' >> drivers/kernelsu/Kconfig
-          fi
-
       - name: Apply Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
         run: |
@@ -995,7 +988,7 @@ jobs:
           cd kernel_workspace
           if [ "${{ github.event.inputs.SUSFS }}" != "false" ]; then
             SUSFS_META="${{ env.SUSFS_META }}"
-            git clone https://github.com/ShirkNeko/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
+            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
             cd susfs4ksu
             if [ -n "$SUSFS_META" ]; then
               if [[ "$SUSFS_META" =~ ^[0-9]+$ ]]; then
@@ -1158,7 +1151,7 @@ jobs:
           set_config "CONFIG_KSU=y"
 
           # KPM配置
-          if [ "${{ github.event.inputs.KPM }}" = "KPM" ]; then
+          if [ "${{ github.event.inputs.KPM }}" = "KPM" ] || [ "${{ github.event.inputs.KPM }}" = "N/A" ]; then
             set_config "CONFIG_KPM=y"
           fi
           if [ "${{ github.event.inputs.KPM }}" = "KPN" ]; then
@@ -1177,13 +1170,6 @@ jobs:
             set_config "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y"
             set_config "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"
             set_config "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"
-          set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
-          # BBR congestion control
-          set_config "CONFIG_TCP_CONG_ADVANCED=y"
-          set_config "CONFIG_TCP_CONG_BBR=y"
-          set_config "CONFIG_NET_SCH_FQ=y"
-          set_config "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
-
           else
             set_config "CONFIG_KSU_SUSFS=n"
           fi
@@ -1458,7 +1444,6 @@ jobs:
       - name: Fallback to Build Kernel
         if: ${{ github.event.inputs.FAST_BUILD == 'false' || steps.fast_build.outputs.fallback == 'true' }}
         run: |
-          export KCFLAGS="-Wno-error=implicit-function-declaration -Wno-error=unused-function"
           cd kernel_workspace
           if [ -f ./kernel_platform/build_with_bazel.py ]; then
             ./kernel_platform/oplus/bazel/oplus_modules_variant.sh ${{ env.CPUD }} ${{ env.BUILD_METHOD }}
@@ -1485,9 +1470,6 @@ jobs:
             if [ -n "$image_path" ]; then
               echo "✅ 使用官方脚本编译，成功找到 Image 文件"
             fi
-          fi
-          if [ -z "$image_path" ]; then
-            image_path=$(find ./kernel_workspace -name "Image" -path "*arch/arm64/boot*" 2>/dev/null | head -n 1)
           fi
           if [ -z "$image_path" ]; then
             echo "❌ 未找到 Image 文件，构建失败" >&2
