@@ -988,7 +988,7 @@ jobs:
           cd kernel_workspace
           if [ "${{ github.event.inputs.SUSFS }}" != "false" ]; then
             SUSFS_META="${{ env.SUSFS_META }}"
-            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
+            git clone https://github.com/ShirkNeko/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
             cd susfs4ksu
             if [ -n "$SUSFS_META" ]; then
               if [[ "$SUSFS_META" =~ ^[0-9]+$ ]]; then
@@ -1030,6 +1030,13 @@ jobs:
           fi
           source $REJ_CHECKER
           check_rejects .
+
+      - name: Add SUSFS priority uid filter Kconfig
+        run: |
+          cd kernel_workspace/kernel_platform/common
+          if [ -f drivers/kernelsu/Kconfig ] && ! grep -q KSU_SUSFS_PRIORITY_UID_FILTER drivers/kernelsu/Kconfig; then
+            printf '\nconfig KSU_SUSFS_PRIORITY_UID_FILTER\n\tbool "SUSFS priority uid filter"\n\tdefault y\n' >> drivers/kernelsu/Kconfig
+          fi
 
       - name: Revert and Postfix Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
@@ -1170,9 +1177,16 @@ jobs:
             set_config "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y"
             set_config "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y"
             set_config "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y"
+            set_config "CONFIG_KSU_SUSFS_PRIORITY_UID_FILTER=y"
           else
             set_config "CONFIG_KSU_SUSFS=n"
           fi
+
+          # BBR congestion control
+          set_config "CONFIG_TCP_CONG_ADVANCED=y"
+          set_config "CONFIG_TCP_CONG_BBR=y"
+          set_config "CONFIG_NET_SCH_FQ=y"
+          set_config "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
 
           # TMPFS配置*
           set_config "CONFIG_TMPFS_XATTR=y"
@@ -1444,6 +1458,7 @@ jobs:
       - name: Fallback to Build Kernel
         if: ${{ github.event.inputs.FAST_BUILD == 'false' || steps.fast_build.outputs.fallback == 'true' }}
         run: |
+          export KCFLAGS="-Wno-error=implicit-function-declaration -Wno-error=unused-function"
           cd kernel_workspace
           if [ -f ./kernel_platform/build_with_bazel.py ]; then
             ./kernel_platform/oplus/bazel/oplus_modules_variant.sh ${{ env.CPUD }} ${{ env.BUILD_METHOD }}
@@ -1470,6 +1485,9 @@ jobs:
             if [ -n "$image_path" ]; then
               echo "✅ 使用官方脚本编译，成功找到 Image 文件"
             fi
+          fi
+          if [ -z "$image_path" ]; then
+            image_path=$(find ./kernel_workspace -name "Image" -path "*arch/arm64/boot*" 2>/dev/null | head -n 1)
           fi
           if [ -z "$image_path" ]; then
             echo "❌ 未找到 Image 文件，构建失败" >&2
