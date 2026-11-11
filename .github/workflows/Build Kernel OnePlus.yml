@@ -976,6 +976,13 @@ jobs:
           grep -nE '^(REPO_OWNER|REPO_NAME|REPO_BRANCH|KSU_VERSION_API|KSU_VERSION_FULL|VERSION_TAG|GIT_BIN|CURL_BIN)' kernel/Makefile
           echo "::endgroup::"
 
+      - name: Fix SukiSU selinux rules.c policydb typo
+        run: |
+          cd kernel_workspace/kernel_platform/KernelSU
+          sed -i 's/policydb->latest_granting/pol->latest_granting/' kernel/selinux/rules.c
+          echo "rules.c latest_granting lines:"
+          grep -n 'latest_granting' kernel/selinux/rules.c
+
       - name: Apply Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
         run: |
