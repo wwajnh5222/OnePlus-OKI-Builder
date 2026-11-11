@@ -9,6 +9,7 @@
 3. **放行 -Werror**：Fallback 构建加 `-Wno-error=implicit-function-declaration -Wno-error=unused-function`（SukiSU 源码不 include susfs.h）。
 4. **BBR**：打开 `CONFIG_TCP_CONG_BBR` + `CONFIG_NET_SCH_FQ`（默认拥塞算法仍是 cubic，可自行切换）。
 5. **Image 兜底**：Make AnyKernel3 增加全工作区查找 Image，避免官方脚本输出路径不被识别。
+6. **SukiSU 41176 笔误修复**：新版 SukiSU（41176）`kernel/selinux/rules.c` 把 `pol->latest_granting` 误写成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），导致编译 SELinux 时报错；workflow 已加一步自动 `sed` 修正。
 
 ## 如何编译新版本
 
@@ -59,3 +60,4 @@
   ```
   su -c 'echo bbr > /proc/sys/net/ipv4/tcp_congestion_control'
   ```
+- **SukiSU 跟随上游最新版**（KSU_META 默认），版本会自动升级（41168 → 41176 → …）；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
