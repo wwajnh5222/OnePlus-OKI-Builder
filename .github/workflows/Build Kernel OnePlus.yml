@@ -1038,20 +1038,6 @@ jobs:
             printf '\nconfig KSU_SUSFS_PRIORITY_UID_FILTER\n\tbool "SUSFS priority uid filter"\n\tdefault y\n' >> drivers/kernelsu/Kconfig
           fi
 
-      - name: Integrate NoMount (VFS redirection)
-        run: |
-          cd kernel_workspace/kernel_platform/common
-          git clone --depth=1 --branch master https://github.com/maxsteeel/nomount /tmp/nomount
-          mkdir -p fs/nomount
-          cp -f /tmp/nomount/kernel/src/* fs/nomount/
-          if ! grep -q "fs/nomount/Kconfig" fs/Kconfig; then
-            printf '\nsource "fs/nomount/Kconfig"\n' >> fs/Kconfig
-          fi
-          if ! grep -q "CONFIG_NOMOUNT" fs/Makefile; then
-            printf '\nobj-\$(CONFIG_NOMOUNT) += nomount/\n' >> fs/Makefile
-          fi
-          echo "NoMount integrated into kernel source"
-
       - name: Revert and Postfix Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
         run: |
@@ -1201,7 +1187,6 @@ jobs:
           set_config "CONFIG_TCP_CONG_BBR=y"
           set_config "CONFIG_NET_SCH_FQ=y"
           set_config "CONFIG_DEFAULT_TCP_CONG=\"bbr\""
-          set_config "CONFIG_NOMOUNT=y"
 
           # TMPFS配置*
           set_config "CONFIG_TMPFS_XATTR=y"
