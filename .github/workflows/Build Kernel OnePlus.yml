@@ -1545,19 +1545,21 @@ jobs:
           mv -f oImage Image
           cp Image "${GITHUB_WORKSPACE}/AnyKernel3/Image"
 
-      - name: Download SukiSU-Nova v3.0.0 (30000) APK
+      - name: Download latest SukiSU-Nova manager APK
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Pin manager APK to SukiSU-Nova v3.0.0 (versionCode 30000)
-          PINNED_URL="https://github.com/SukiSU-Nova/SukiSU-Nova/releases/download/v3.0.0/SukiSU_Nova_v3.0.0_30000-release.apk"
-          if curl -fL -o manager.apk "$PINNED_URL"; then
-            echo "Downloaded pinned SukiSU-Nova v3.0.0 (30000) APK"
-            cp -f manager.apk ./AnyKernel3/
-            exit 0
+          # Follow SukiSU-Nova latest release automatically; fall back to CI artifact
+          APK_URL=$(gh api "repos/SukiSU-Nova/SukiSU-Nova/releases/latest" --jq '.assets[] | select(.name | endswith(".apk")) | .browser_download_url' 2>/dev/null | head -n1)
+          if [ -n "$APK_URL" ]; then
+            echo "Downloading latest release APK: $APK_URL"
+            if curl -fL -o manager.apk "$APK_URL"; then
+              cp -f manager.apk ./AnyKernel3/
+              exit 0
+            fi
           fi
-          echo "Pinned APK download failed, falling back to CI artifact"
+          echo "Release APK unavailable, falling back to CI artifact"
           MANAGER_ARTIFACT=Manager
           run_id=$(gh api "repos/SukiSU-Nova/SukiSU-Nova/actions/workflows/build-manager.yml/runs?branch=$KSU_MANAGER_BRANCH&status=success&event=push&per_page=1" --jq '.workflow_runs[0].id' || echo "")
           if [[ -z "$run_id" ]]; then
