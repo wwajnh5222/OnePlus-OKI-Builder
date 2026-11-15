@@ -991,8 +991,12 @@ jobs:
           sed -i 's/policydb->latest_granting/pol->latest_granting/' kernel/selinux/rules.c
           # hide SELinux policy-reload seqno (avdSeqNo) so detectors see initial epoch
           sed -i 's/reset_avc_cache(pol->latest_granting)/reset_avc_cache(0)/g' kernel/selinux/rules.c
+          # keep policy generation unchanged so access.avd.seqno stays at the stock value
+          sed -i 's/pol->latest_granting = old_pol->latest_granting + 1;/pol->latest_granting = old_pol->latest_granting;/g' kernel/selinux/rules.c
           echo "rules.c reset_avc_cache lines:"
           grep -n 'reset_avc_cache' kernel/selinux/rules.c
+          echo "rules.c latest_granting lines:"
+          grep -n 'latest_granting' kernel/selinux/rules.c
 
       - name: Apply Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
