@@ -4,7 +4,7 @@
 
 ## 相对原版 workflow 已做的改动
 
-1. **SUSFS 源换新**：`gitlab.com/simonpunk/susfs4ksu` → `github.com/ShirkNeko/susfs4ksu`（分支 `gki-android13-5.15`，当前 = **SUSFS v2.4.0**）。原版 SUSFS 1.5.x 与新版 SukiSU（41148+）不兼容，会报 `susfs_set_priority_uid_filter` 隐式声明错误。
+1. **SUSFS ?**???? `gitlab.com/simonpunk/susfs4ksu` ? `gki-android13-5.15` ????? = **SUSFS v2.4.0**?? SukiSU 41148+ ??? `susfs_set_priority_uid_filter` ???????????? 1.5.x ??? SukiSU ????????????? `ShirkNeko/susfs4ksu` GitHub ??????????? `SukiSU-Nova`??????? GitLab ???
 2. **补 Kconfig**：新增 `KSU_SUSFS_PRIORITY_UID_FILTER` 的 Kconfig 定义，并在 defconfig 打开（否则链接报 `undefined symbol`）。
 3. **放行 -Werror**：Fallback 构建加 `-Wno-error=implicit-function-declaration -Wno-error=unused-function`（SukiSU 源码不 include susfs.h）。
 4. **BBR**：打开 `CONFIG_TCP_CONG_BBR` + `CONFIG_NET_SCH_FQ`（默认拥塞算法仍是 cubic，可自行切换）。
