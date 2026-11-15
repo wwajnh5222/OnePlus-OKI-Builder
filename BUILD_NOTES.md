@@ -9,7 +9,7 @@
 3. **放行 -Werror**：Fallback 构建加 `-Wno-error=implicit-function-declaration -Wno-error=unused-function`（SukiSU 源码不 include susfs.h）。
 4. **BBR**：打开 `CONFIG_TCP_CONG_BBR` + `CONFIG_NET_SCH_FQ`（默认拥塞算法仍是 cubic，可自行切换）。
 5. **Image 兜底**：Make AnyKernel3 增加全工作区查找 Image，避免官方脚本输出路径不被识别。
-6. **SukiSU rules.c 修复**：新版 SukiSU（41176+）的 `kernel/selinux/rules.c` 有两个问题——(a) `pol->latest_granting` 笔误成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），编译 SELinux 时报错；(b) 新代码把 SELinux 策略重载序号 `avdSeqNo` 改成递增通知（1、2、3…），Duck Detector / Hunter / 春秋 等检测会读到“非初始 epoch”判为可疑。workflow 已加 sed 修复：`policydb->latest_granting` → `pol->latest_granting`，并把 `reset_avc_cache(pol->latest_granting)` 改回 `reset_avc_cache(0)`（恢复旧行为、隐藏重载序号）。
+6. **SukiSU rules.c 修复**：新版 SukiSU（41176+）的 `kernel/selinux/rules.c` 有几个问题——(a) `pol->latest_granting` 笔误成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），编译 SELinux 时报错；(b) 新代码每次注入规则都把策略 `latest_granting` 加 1 并递增通知，导致 `access.avd.seqno` 涨到 6，Duck Detector / Hunter / 春秋 读到“非初始 epoch”判可疑。workflow 已加三条 sed：`policydb->latest_granting` → `pol->latest_granting`（修编译）；`reset_avc_cache(pol->latest_granting)` → `reset_avc_cache(0)`（通知序号归零）；`pol->latest_granting = old_pol->latest_granting + 1;` → `pol->latest_granting = old_pol->latest_granting;`（策略代际保持不变，`access.avd.seqno` 回到 stock 值）。
 7. **Swap 更稳**：3G swap 文件优先建在工作区大挂载点（根分区满时也能建），两处都失败就只警告并继续，不再直接中止构建。
 8. **SukiSU 仓库改名**：上游 `SukiSU-Ultra/SukiSU-Ultra` 已改名为 `SukiSU-Nova/SukiSU-Nova`，workflow 已同步（setup.sh、releases、manager APK 下载都改用 Nova）。
 9. **管理器 APK 跟随 Nova 最新版**：每次构建自动从 `SukiSU-Nova/SukiSU-Nova` 的 latest release 下载对应 `.apk`（取不到时回退到 CI 的 Manager artifact），所以 Nova 发新版后重新构建就会自动带上新管理器，无需改 workflow。
