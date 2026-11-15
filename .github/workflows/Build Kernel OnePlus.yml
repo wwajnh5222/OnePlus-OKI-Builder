@@ -1545,29 +1545,30 @@ jobs:
           mv -f oImage Image
           cp Image "${GITHUB_WORKSPACE}/AnyKernel3/Image"
 
-      - name: Download Latest SukiSU-Nova APK from CI
+      - name: Download SukiSU-Nova v3.0.0 (30000) APK
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Pin manager APK to SukiSU-Nova v3.0.0 (versionCode 30000)
+          PINNED_URL="https://github.com/SukiSU-Nova/SukiSU-Nova/releases/download/v3.0.0/SukiSU_Nova_v3.0.0_30000-release.apk"
+          if curl -fL -o manager.apk "$PINNED_URL"; then
+            echo "Downloaded pinned SukiSU-Nova v3.0.0 (30000) APK"
+            cp -f manager.apk ./AnyKernel3/
+            exit 0
+          fi
+          echo "Pinned APK download failed, falling back to CI artifact"
           MANAGER_ARTIFACT=Manager
-
-          echo "Using branch: $KSU_MANAGER_BRANCH"
-          echo "Downloading artifact: $MANAGER_ARTIFACT"
-
           run_id=$(gh api "repos/SukiSU-Nova/SukiSU-Nova/actions/workflows/build-manager.yml/runs?branch=$KSU_MANAGER_BRANCH&status=success&event=push&per_page=1" --jq '.workflow_runs[0].id' || echo "")
-
           if [[ -z "$run_id" ]]; then
-            echo "No successful workflow run found on branch $KSU_MANAGER_BRANCH. Skipping download."
+            echo "No successful workflow run found. Skipping download."
             exit 0
           fi
           artifact_url=$(gh api "repos/SukiSU-Nova/SukiSU-Nova/actions/runs/$run_id/artifacts" | jq -r ".artifacts[] | select(.name == \"$MANAGER_ARTIFACT\") | .archive_download_url" | head -n1)
-
           if [[ -z "$artifact_url" ]]; then
-            echo "No artifact '$MANAGER_ARTIFACT' found in run $run_id. Skipping download."
+            echo "No artifact found. Skipping download."
             exit 0
           fi
-          echo "Downloading from: $artifact_url"
           curl -fL -H "Authorization: token $GITHUB_TOKEN" -o "${MANAGER_ARTIFACT}.zip" "$artifact_url"
           unzip -j "${MANAGER_ARTIFACT}.zip" "*.apk" -d ./AnyKernel3/
 
