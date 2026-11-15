@@ -596,11 +596,19 @@ jobs:
 
       - name: Create and Enable 3G Swap
         run: |
-          sudo swapoff -a
-          sudo fallocate -l 3G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          sudo swapoff -a || true
+          for SWAP_FILE in "${GITHUB_WORKSPACE}/.swapfile" /swapfile; do
+            if sudo fallocate -l 3G "$SWAP_FILE" 2>/dev/null || sudo dd if=/dev/zero of="$SWAP_FILE" bs=1M count=3072 status=none 2>/dev/null; then
+              sudo chmod 600 "$SWAP_FILE"
+              if sudo mkswap "$SWAP_FILE" >/dev/null && sudo swapon "$SWAP_FILE"; then
+                echo "Swap enabled at $SWAP_FILE"
+                free -h
+                exit 0
+              fi
+              sudo rm -f "$SWAP_FILE"
+            fi
+          done
+          echo "WARNING: could not create swap on any location, continuing without swap"
           free -h
 
       - name: Set Cache Environment
