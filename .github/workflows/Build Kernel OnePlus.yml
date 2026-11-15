@@ -998,7 +998,7 @@ jobs:
           cd kernel_workspace
           if [ "${{ github.event.inputs.SUSFS }}" != "false" ]; then
             SUSFS_META="${{ env.SUSFS_META }}"
-            git clone https://github.com/ShirkNeko/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
+            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.KANDROID_VERSION }}-${{ env.KERNEL_VERSION }}${{ github.event.inputs.SUSFS_DEV == 'true' && '-dev' || '' }}
             cd susfs4ksu
             if [ -n "$SUSFS_META" ]; then
               if [[ "$SUSFS_META" =~ ^[0-9]+$ ]]; then
@@ -1014,7 +1014,7 @@ jobs:
           if [ "${{ github.event.inputs.LZ4_UPDATE }}" = "true" ]; then
             git clone https://github.com/siri666666/lz4_oplus.git
           fi
-          git clone https://github.com/ShirkNeko/SukiSU_patch.git
+          git clone https://github.com/SukiSU-Nova/SukiSU_patch.git
           cd kernel_platform
           if [ "${{ github.event.inputs.SUSFS }}" != "false" ]; then
             echo "正在拉取susfs补丁"
