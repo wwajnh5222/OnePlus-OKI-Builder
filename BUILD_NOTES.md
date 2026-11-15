@@ -14,6 +14,10 @@
 8. **SukiSU 仓库改名**：上游 `SukiSU-Ultra/SukiSU-Ultra` 已改名为 `SukiSU-Nova/SukiSU-Nova`，workflow 已同步（setup.sh、releases、manager APK 下载都改用 Nova）。
 9. **管理器 APK 跟随 Nova 最新版**：每次构建自动从 `SukiSU-Nova/SukiSU-Nova` 的 latest release 下载对应 `.apk`（取不到时回退到 CI 的 Manager artifact），所以 Nova 发新版后重新构建就会自动带上新管理器，无需改 workflow。
 
+## 验证结果
+
+- **2026-11-16**：按上面配置编出的 AK3（SukiSU Nova + SUSFS v2.4.0 + BBG + BBR，含 rules.c 三项修复）刷入后，Duck Detector / Hunter / 春秋 的 SELinux `access.avd.seqno` 异常已消失，**检测通过**。
+
 ## 如何编译新版本
 
 1. 打开 **Actions → 构建一加内核 → Run workflow**。
