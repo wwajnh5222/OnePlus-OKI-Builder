@@ -12,6 +12,7 @@
 6. **SukiSU rules.c 修复**：新版 SukiSU（41176+）的 `kernel/selinux/rules.c` 有两个问题——(a) `pol->latest_granting` 笔误成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），编译 SELinux 时报错；(b) 新代码把 SELinux 策略重载序号 `avdSeqNo` 改成递增通知（1、2、3…），Duck Detector / Hunter / 春秋 等检测会读到“非初始 epoch”判为可疑。workflow 已加 sed 修复：`policydb->latest_granting` → `pol->latest_granting`，并把 `reset_avc_cache(pol->latest_granting)` 改回 `reset_avc_cache(0)`（恢复旧行为、隐藏重载序号）。
 7. **Swap 更稳**：3G swap 文件优先建在工作区大挂载点（根分区满时也能建），两处都失败就只警告并继续，不再直接中止构建。
 8. **SukiSU 仓库改名**：上游 `SukiSU-Ultra/SukiSU-Ultra` 已改名为 `SukiSU-Nova/SukiSU-Nova`，workflow 已同步（setup.sh、releases、manager APK 下载都改用 Nova）。
+9. **管理器 APK 跟随 Nova 最新版**：每次构建自动从 `SukiSU-Nova/SukiSU-Nova` 的 latest release 下载对应 `.apk`（取不到时回退到 CI 的 Manager artifact），所以 Nova 发新版后重新构建就会自动带上新管理器，无需改 workflow。
 
 ## 如何编译新版本
 
@@ -62,4 +63,4 @@
   ```
   su -c 'echo bbr > /proc/sys/net/ipv4/tcp_congestion_control'
   ```
-- **SukiSU 跟随上游最新版**（KSU_META 默认；仓库已改名为 `SukiSU-Nova`，workflow 已同步），版本会自动升级（41168 → 41176 → 41186 → …）；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
+- **SukiSU 跟随上游最新版**（KSU_META 默认；仓库已改名为 `SukiSU-Nova`，workflow 已同步），版本会自动升级；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
