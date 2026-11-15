@@ -4,12 +4,14 @@
 
 ## 相对原版 workflow 已做的改动
 
-1. **SUSFS ?**???? `gitlab.com/simonpunk/susfs4ksu` ? `gki-android13-5.15` ????? = **SUSFS v2.4.0**?? SukiSU 41148+ ??? `susfs_set_priority_uid_filter` ???????????? 1.5.x ??? SukiSU ????????????? `ShirkNeko/susfs4ksu` GitHub ??????????? `SukiSU-Nova`??????? GitLab ???
+1. **SUSFS 源**：用上游 `gitlab.com/simonpunk/susfs4ksu` 的 `gki-android13-5.15` 分支（当前 = **SUSFS v2.4.0**，含 SukiSU 41148+ 需要的 `susfs_set_priority_uid_filter` 等函数）。早期的 1.5.x 分支与新版 SukiSU 不兼容会编译报错；曾用过的 `ShirkNeko/susfs4ksu` GitHub 镜像已下线（账号改名为 `SukiSU-Nova`），所以统一用 GitLab 上游。
 2. **补 Kconfig**：新增 `KSU_SUSFS_PRIORITY_UID_FILTER` 的 Kconfig 定义，并在 defconfig 打开（否则链接报 `undefined symbol`）。
 3. **放行 -Werror**：Fallback 构建加 `-Wno-error=implicit-function-declaration -Wno-error=unused-function`（SukiSU 源码不 include susfs.h）。
 4. **BBR**：打开 `CONFIG_TCP_CONG_BBR` + `CONFIG_NET_SCH_FQ`（默认拥塞算法仍是 cubic，可自行切换）。
 5. **Image 兜底**：Make AnyKernel3 增加全工作区查找 Image，避免官方脚本输出路径不被识别。
-6. **SukiSU 41176 rules.c ??**??? SukiSU?41176?? `kernel/selinux/rules.c` ???????(a) `pol->latest_granting` ??? `policydb->latest_granting`?`policydb` ? struct ??????????? SELinux ????(b) ???? SELinux ?????? `avdSeqNo` ???????1?2?3???Duck Detector / Hunter / ?? ??????"??? epoch"?????workflow ?? sed ???`policydb->latest_granting` ? `pol->latest_granting`??? `reset_avc_cache(pol->latest_granting)` ?? `reset_avc_cache(0)`???????????????
+6. **SukiSU rules.c 修复**：新版 SukiSU（41176+）的 `kernel/selinux/rules.c` 有两个问题——(a) `pol->latest_granting` 笔误成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），编译 SELinux 时报错；(b) 新代码把 SELinux 策略重载序号 `avdSeqNo` 改成递增通知（1、2、3…），Duck Detector / Hunter / 春秋 等检测会读到“非初始 epoch”判为可疑。workflow 已加 sed 修复：`policydb->latest_granting` → `pol->latest_granting`，并把 `reset_avc_cache(pol->latest_granting)` 改回 `reset_avc_cache(0)`（恢复旧行为、隐藏重载序号）。
+7. **Swap 更稳**：3G swap 文件优先建在工作区大挂载点（根分区满时也能建），两处都失败就只警告并继续，不再直接中止构建。
+8. **SukiSU 仓库改名**：上游 `SukiSU-Ultra/SukiSU-Ultra` 已改名为 `SukiSU-Nova/SukiSU-Nova`，workflow 已同步（setup.sh、releases、manager APK 下载都改用 Nova）。
 
 ## 如何编译新版本
 
@@ -60,4 +62,4 @@
   ```
   su -c 'echo bbr > /proc/sys/net/ipv4/tcp_congestion_control'
   ```
-- **SukiSU 跟随上游最新版**（KSU_META 默认），版本会自动升级（41168 → 41176 → …）；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
+- **SukiSU 跟随上游最新版**（KSU_META 默认；仓库已改名为 `SukiSU-Nova`，workflow 已同步），版本会自动升级（41168 → 41176 → 41186 → …）；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
