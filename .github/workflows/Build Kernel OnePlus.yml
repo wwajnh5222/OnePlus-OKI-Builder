@@ -976,12 +976,15 @@ jobs:
           grep -nE '^(REPO_OWNER|REPO_NAME|REPO_BRANCH|KSU_VERSION_API|KSU_VERSION_FULL|VERSION_TAG|GIT_BIN|CURL_BIN)' kernel/Makefile
           echo "::endgroup::"
 
-      - name: Fix SukiSU selinux rules.c policydb typo
+      - name: Fix SukiSU selinux rules.c (typo + hide avdSeqNo)
         run: |
           cd kernel_workspace/kernel_platform/KernelSU
+          # 41176 bug: policydb->latest_granting should be pol->latest_granting
           sed -i 's/policydb->latest_granting/pol->latest_granting/' kernel/selinux/rules.c
-          echo "rules.c latest_granting lines:"
-          grep -n 'latest_granting' kernel/selinux/rules.c
+          # hide SELinux policy-reload seqno (avdSeqNo) so detectors see initial epoch
+          sed -i 's/reset_avc_cache(pol->latest_granting)/reset_avc_cache(0)/g' kernel/selinux/rules.c
+          echo "rules.c reset_avc_cache lines:"
+          grep -n 'reset_avc_cache' kernel/selinux/rules.c
 
       - name: Apply Fake Patches
         if: ${{ github.event.inputs.SUSFS != 'false' }}
