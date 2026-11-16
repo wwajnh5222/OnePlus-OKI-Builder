@@ -11,8 +11,8 @@
 5. **Image 兜底**：Make AnyKernel3 增加全工作区查找 Image，避免官方脚本输出路径不被识别。
 6. **SukiSU rules.c 修复**：新版 SukiSU（41176+）的 `kernel/selinux/rules.c` 有几个问题——(a) `pol->latest_granting` 笔误成 `policydb->latest_granting`（`policydb` 是 struct 类型名不是变量），编译 SELinux 时报错；(b) 新代码每次注入规则都把策略 `latest_granting` 加 1 并递增通知，导致 `access.avd.seqno` 涨到 6，Duck Detector / Hunter / 春秋 读到“非初始 epoch”判可疑。workflow 已加三条 sed：`policydb->latest_granting` → `pol->latest_granting`（修编译）；`reset_avc_cache(pol->latest_granting)` → `reset_avc_cache(0)`（通知序号归零）；`pol->latest_granting = old_pol->latest_granting + 1;` → `pol->latest_granting = old_pol->latest_granting;`（策略代际保持不变，`access.avd.seqno` 回到 stock 值）。
 7. **Swap 更稳**：3G swap 文件优先建在工作区大挂载点（根分区满时也能建），两处都失败就只警告并继续，不再直接中止构建。
-8. **SukiSU 仓库改名**：上游 `SukiSU-Ultra/SukiSU-Ultra` 已改名为 `SukiSU-Nova/SukiSU-Nova`，workflow 已同步（setup.sh、releases、manager APK 下载都改用 Nova）。
-9. **管理器 APK 跟随 Nova 最新版**：每次构建自动从 `SukiSU-Nova/SukiSU-Nova` 的 latest release 下载对应 `.apk`（取不到时回退到 CI 的 Manager artifact），所以 Nova 发新版后重新构建就会自动带上新管理器，无需改 workflow。
+8. **SukiSU 权威源 = ShirkNeko 自建 Forgejo**：`git.zako.shirkneko.top:20004/shirkneko/SukiSU` 是作者的最新源；GitHub 的 `SukiSU-Nova/SukiSU-Nova` 是滞后的镜像（例如 GitHub 上管理器还停在 versionCode 30000，Forgejo 已到 35000）。workflow 已改为优先从 Forgejo 拉内核源码（`kernel/setup.sh`）和版本号，GitHub 作为 fallback。
+9. **管理器 APK 跟随最新版**：每次构建优先从 Forgejo 的 latest release 下载对应 `.apk`（当前 v3.0.0 / versionCode **35000**），取不到再回退 GitHub release，最后回退 CI 的 Manager artifact。所以 Nova 发新版后重新构建就会自动带上新管理器。
 
 ## 验证结果
 
@@ -67,4 +67,4 @@
   ```
   su -c 'echo bbr > /proc/sys/net/ipv4/tcp_congestion_control'
   ```
-- **SukiSU 跟随上游最新版**（KSU_META 默认；仓库已改名为 `SukiSU-Nova`，workflow 已同步），版本会自动升级；若新版 SukiSU 又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
+- **SukiSU 跟随 ShirkNeko Forgejo 最新版**（KSU_META 默认），版本会自动升级；若新版又引入新的编译错误，可仿照「已做的改动 6」在 workflow 里补一个 sed 修复，或用 KSU_META 第 4 段提交哈希把 SukiSU 锁定到某个能编过的版本。
