@@ -916,7 +916,19 @@ jobs:
           [[ -n "$KSU_CUSTOM_TAG" ]] && echo "自定义版本标识: $KSU_CUSTOM_TAG" || echo "自定义版本标识: 未启用"
           [[ -n "$MANUAL_HASH" ]] && echo "手动指定 hash: $MANUAL_HASH" || echo "手动指定 hash: 未启用"
 
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Nova/SukiSU-Nova/${KSU_MANAGER_BRANCH}/kernel/setup.sh" | bash -s "$KSU_BUILTIN_BRANCH"
+          FORGEJO_SETUP="https://git.zako.shirkneko.top:20004/shirkneko/SukiSU/raw/branch/${KSU_MANAGER_BRANCH}/kernel/setup.sh"
+          if ! curl -LSsf --max-time 30 "$FORGEJO_SETUP" -o /tmp/setup.sh || [ ! -s /tmp/setup.sh ]; then
+            echo "Forgejo setup.sh unavailable, falling back to GitHub"
+            rm -rf ./KernelSU
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Nova/SukiSU-Nova/${KSU_MANAGER_BRANCH}/kernel/setup.sh" | bash -s "$KSU_BUILTIN_BRANCH"
+          else
+            echo "Using ShirkNeko Forgejo setup.sh"
+            if ! bash /tmp/setup.sh "$KSU_BUILTIN_BRANCH" || [ ! -d ./KernelSU ]; then
+              echo "Forgejo setup failed, falling back to GitHub"
+              rm -rf ./KernelSU
+              curl -LSs "https://raw.githubusercontent.com/SukiSU-Nova/SukiSU-Nova/${KSU_MANAGER_BRANCH}/kernel/setup.sh" | bash -s "$KSU_BUILTIN_BRANCH"
+            fi
+          fi
           cd ./KernelSU
           # SukiSU 的 pkg_observer.c 无条件调用 SUSFS 函数，不编 SUSFS 时会编译失败
           if [ "${{ github.event.inputs.SUSFS }}" = "false" ]; then
@@ -933,8 +945,12 @@ jobs:
             SHORT_HASH=${MANUAL_HASH:0:8}
           fi
 
-          KSU_VERSION_TAG=$(curl -fsSL https://api.github.com/repos/SukiSU-Nova/SukiSU-Nova/releases/latest \
-            | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')
+          KSU_VERSION_TAG=$(curl -fsSL --max-time 20 "https://git.zako.shirkneko.top:20004/api/v1/repos/shirkneko/SukiSU/releases/latest" \
+            | grep -o '"tag_name":"[^"]*"' | head -n1 | sed -E 's/.*"v?([^"]+)".*/\1/')
+          if [ -z "$KSU_VERSION_TAG" ]; then
+            KSU_VERSION_TAG=$(curl -fsSL https://api.github.com/repos/SukiSU-Nova/SukiSU-Nova/releases/latest \
+              | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')
+          fi
           if [[ -z "$KSU_VERSION_TAG" || "$(printf '%s\n' "$KSU_VERSION_TAG" "3.1.7" | sort -V | head -n1)" != "3.1.7" ]]; then
             KSU_VERSION_TAG="3.1.7"
           fi
